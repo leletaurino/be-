@@ -3,6 +3,9 @@ from markupsafe import escape
 from flask import url_for
 from flask import render_template
 from Models import app
+import base64
+from Controller import user_controller
+from Models import User
 
 
 @app.errorhandler(404)
@@ -16,7 +19,7 @@ def home():
     return """
     <h1>Home</h1>
         <br>
-        
+
     <a href="/user/ant">go to Username</a>
         <br>
 
@@ -37,6 +40,24 @@ def valid_login(username, password):
         return True
     else:
         return False
+
+
+@app.route('/api/auth/signup', methods=['POST'])
+def signup():
+    user = {}
+    for k, v in request.json.items():
+        base64_bytes = v.encode('ascii')
+        message_bytes = base64.b64decode(base64_bytes)
+        message = message_bytes.decode('ascii')
+
+        user.update({k: message})
+
+    print('message: ', user)
+    user_old = user_controller.get_single_user(user['username_cr'])
+
+    if not user_old:
+        user_controller.create_single_user(user)
+    return {"resp": "ok"}
 
 
 @app.route('/check_data', methods=['POST'])
