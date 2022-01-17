@@ -1,3 +1,5 @@
+import datetime
+
 from flask import request, redirect, make_response
 from markupsafe import escape
 from flask import url_for
@@ -5,7 +7,7 @@ from flask import render_template
 from Models import app
 import base64
 from Controller import user_controller
-from Models import User
+from User_dto import UserDto
 
 
 @app.errorhandler(404)
@@ -52,12 +54,25 @@ def signup():
 
         user.update({k: message})
 
-    print('message: ', user)
-    user_old = user_controller.get_single_user(user['username_cr'])
-
-    if not user_old:
-        user_controller.create_single_user(user)
-    return {"resp": "ok"}
+    new_user = UserDto(
+        username=user['username_cr'],
+        email=user['email_cr'],
+        password=user['password_cr'],
+        created=datetime.datetime.now(),
+        expiration=datetime.datetime.now() + datetime.timedelta(days=1)
+    )
+    print('user: ', user)
+    print('new_user: ', new_user)
+    try:
+        if user_controller.create_single_user(new_user):
+            print("ok")
+            return {"resp": "ok"}
+        else:
+            print("user already signed up!")
+            return {"resp": "user already signed up!"}
+    except Exception as error:
+        print(error)
+        return {"err": error}
 
 
 @app.route('/check_data', methods=['POST'])
